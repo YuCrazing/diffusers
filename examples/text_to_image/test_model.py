@@ -3,18 +3,25 @@ from diffusers.utils import make_image_grid
 
 import torch
 
-model_path = "sd-model-finetuned-1500-clean"
-pipeline = StableDiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float16, use_safetensors=True).to("cuda")
+# model_path = "sd-model-finetuned-1500-clean"
+model_path = "sd-model-finetuned-15000"
+pipeline = StableDiffusionPipeline.from_pretrained(model_path, torch_dtype=torch.float32, use_safetensors=True).to("cuda")
 
-# unet = UNet2DConditionModel.from_pretrained(
-#     model_path+"/checkpoint-500", subfolder="unet"
-# )
-# pipeline.unet = unet
+ckp = "500"
+if ckp != "":
+    unet = UNet2DConditionModel.from_pretrained(
+        model_path+f"/checkpoint-{ckp}", subfolder="unet"
+    )
+    pipeline.unet = unet
+
 
 pipeline.to("cuda")
 
-generator = [torch.Generator(device="cuda").manual_seed(0) for i in range(4)]
+generator = [torch.Generator(device="cuda").manual_seed(i) for i in range(4)]
 images = pipeline("yoda", generator=generator, num_images_per_prompt=4).images
 
 
-make_image_grid(images, rows=2, cols=2).show()
+# make_image_grid(images, rows=2, cols=2).show()
+for i in range(len(images)):
+    image = images[i]
+    image.save(f"image-{i}-{ckp}.png")
